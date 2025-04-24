@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/estilos.css">
+    <!-- link das fontes do google fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&family=Press+Start+2P&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <title>Consulta de Dados</title>
+    <script src="https://unpkg.com/@microsoft/office-js@1.1/dist/office.js"></script>
+    
+    
+</head>
+<body>
+    <h1>Consulta de Dados</h1>
+    
+    <div class="form-group">
+        <label for="cpf">CPF:</label>
+        <input type="text" id="cpf" placeholder="Digite o CPF">
+        <button onclick="consultarDados()">Consultar</button>
+    </div>
+    
+    <div class="form-group">
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" readonly>
+    </div>
+    
+    <div class="form-group">
+        <label for="cargo">Cargo:</label>
+        <input type="text" id="cargo" readonly>
+    </div>
+    
+    <div class="form-group">
+        <label for="localizacao">Localização:</label>
+        <select id="localizacao" disabled>
+            <option value="">Selecione...</option>
+        </select>
+    </div>
+
+    <script>
+        async function consultarDados() {
+            const cpf = document.getElementById('cpf').value;
+            
+            if (!cpf) {
+                alert('Por favor, digite um CPF válido.');
+                return;
+            }
+
+            try {
+                // Simulação da chamada ao Power Automate
+                // Na implementação real, você usaria o conector do Power Automate
+                const dados = await simularConsultaAutomate(cpf);
+                
+                if (dados) {
+                    document.getElementById('nome').value = dados.nome || '';
+                    document.getElementById('cargo').value = dados.cargo || '';
+                    
+                    // Preencher o combo de localização baseado no cargo
+                    if (dados.cargo) {
+                        const localizacoes = await simularConsultaLocalizacao(dados.cargo);
+                        const select = document.getElementById('localizacao');
+                        select.innerHTML = '<option value="">Selecione...</option>';
+                        
+                        localizacoes.forEach(local => {
+                            const option = document.createElement('option');
+                            option.value = local;
+                            option.textContent = local;
+                            select.appendChild(option);
+                        });
+                        
+                        select.disabled = false;
+                    }
+                } else {
+                    alert('Nenhum dado encontrado para o CPF informado.');
+                }
+            } catch (error) {
+                console.error('Erro ao consultar dados:', error);
+                alert('Ocorreu um erro ao consultar os dados.');
+            }
+        }
+
+        // Funções de simulação - substitua por chamadas reais ao Power Automate
+        async function simularConsultaAutomate(cpf) {
+            // Simulação - na prática, você faria uma chamada HTTP para seu fluxo do Power Automate
+            // que acessaria o arquivo Excel no caminho especificado
+            console.log(`Simulando consulta para CPF: ${cpf}`);
+            
+            // Retorno simulado
+            return {
+                cpf: cpf,
+                nome: "Fulano de Tal",
+                cargo: "Analista"
+            };
+        }
+
+        async function simularConsultaLocalizacao(cargo) {
+            // Simulação - na prática, você faria outra chamada ao Power Automate
+            // para consultar a planilha LOCAL
+            console.log(`Simulando consulta de localização para cargo: ${cargo}`);
+            
+            // Retorno simulado
+            return ["Brasília/DF", "São Paulo/SP", "Rio de Janeiro/RJ"];
+        }
+    </script>
+
+    <!-- Implementação real com Power Automate (UI Flows) -->
+    <script>
+        // Para implementação real com Power Automate, você precisará:
+        // 1. Criar um fluxo no Power Automate que acesse as planilhas Excel
+        // 2. Configurar os conectores adequados
+        // 3. Substituir as funções de simulação por chamadas HTTP reais ao seu fluxo
+        
+        /*
+        Exemplo de como seria uma chamada real:
+        
+        async function consultarDadosReal(cpf) {
+            const response = await fetch('SEU_ENDPOINT_DO_POWER_AUTOMATE', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ cpf: cpf })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Erro na consulta');
+            }
+            
+            return await response.json();
+        }
+        */
+    </script>
+</body>
+</html>
