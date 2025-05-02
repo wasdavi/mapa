@@ -9,174 +9,42 @@
     <title>Consultar o CPF</title>
 </head>
 <body>
-    <h1>Preencher Dados por CPF</h1>
-    <form id="meuFormulario">
+    <h1>Consulta de CPF</h1>
+    <form id="cpfForm">
         <div>
-            <label for="cpf">CPF:</label>
-            <input type="text" id="cpf" name="cpf" placeholder="Digite o CPF">
+            <label for="cpf">Digite o CPF:</label>
+            <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" required>
         </div>
-        <div>
-            <label for="nome">Nome:</label>
-            <input type="text" id="nome" name="nome" readonly>
-        </div>
-        <div>
-            <label for="cargo">Cargo:</label>
-            <input type="text" id="cargo" name="cargo" readonly>
-        </div>
-        <div>
-            <label>Municípios Vinculados:</label><br>
-            <select id="municipio1" name="municipio1" disabled>
-                <option value="">Selecione</option>
-            </select>
-            <select id="municipio2" name="municipio2" disabled>
-                <option value="">Selecione</option>
-            </select>
-            <select id="municipio3" name="municipio3" disabled>
-                <option value="">Selecione</option>
-            </select>
-            <select id="municipio4" name="municipio4" disabled>
-                <option value="">Selecione</option>
-            </select>
-            <select id="municipio5" name="municipio5" disabled>
-                <option value="">Selecione</option>
-            </select>
-        </div>
-        <button type="button" onclick="salvarDadosPowerAutomate()">Salvar</button>
+        <button type="button" onclick="enviarCPF()">Consultar CPF</button>
     </form>
 
     <script>
-        const powerAutomateUrlBuscar = "https://prod-04.brazilsouth.logic.azure.com:443/workflows/d30d8dcba2694a7eadc1df9b9eff4de8/triggers/manual/paths/invoke?api-version=2016-06-01"; // Substitua pela URL do seu fluxo de busca
-        const powerAutomateUrlSalvar = "SUA_URL_DO_GATILHO_HTTP_DO_POWER_AUTOMATE_SALVAR"; // Substitua pela URL do seu fluxo de salvar
+        async function enviarCPF() {
+            const cpf = document.getElementById('cpf').value;
+            const webhookUrl = 'https://prod-12.brazilsouth.logic.azure.com:443/workflows/94de13c8e0ab4a6a90374b13e97c549e/triggers/manual/paths/invoke?api-version=2016-06-01'; // Substitua pela URL do seu webhook
 
-        document.getElementById('cpf').addEventListener('blur', function() {
-            const cpfDigitado = this.value;
-            if (cpfDigitado) {
-                buscarDadosPowerAutomate(cpfDigitado);
+            if (cpf) {
+                try {
+                    const response = await fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ cpf: cpf })
+                    });
+
+                    if (response.ok) {
+                        alert('Solicitação enviada com sucesso!');
+                        document.getElementById('cpfForm').reset();
+                    } else {
+                        alert('Ocorreu um erro ao enviar a solicitação.');
+                    }
+                } catch (error) {
+                    console.error('Erro ao enviar para o Power Automate:', error);
+                    alert('Ocorreu um erro inesperado.');
+                }
             } else {
-                limparFormulario();
-            }
-        });
-
-        async function buscarDadosPowerAutomate(cpf) {
-            try {
-                const response = await fetch(powerAutomateUrlBuscar, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ cpf: cpf })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    alert(`Erro ao buscar dados: ${response.status} - ${errorData?.erro || 'Erro desconhecido'}`);
-                    limparFormulario();
-                    return;
-                }
-
-                const data = await response.json();
-                document.getElementById('nome').value = data.nome;
-                document.getElementById('cargo').value = data.cargo;
-                popularMunicipios(data.municipios);
-
-            } catch (error) {
-                console.error('Erro ao comunicar com o Power Automate (buscar):', error);
-                alert('Ocorreu um erro ao buscar os dados.');
-                limparFormulario();
-            }
-        }
-
-        function popularMunicipios(municipios) {
-            const selectsMunicipios = [
-                document.getElementById('municipio1'),
-                document.getElementById('municipio2'),
-                document.getElementById('municipio3'),
-                document.getElementById('municipio4'),
-                document.getElementById('municipio5')
-            ];
-
-            selectsMunicipios.forEach(select => {
-                select.innerHTML = '<option value="">Selecione</option>';
-            });
-
-            for (let i = 0; i < Math.min(municipios.length, selectsMunicipios.length); i++) {
-                const option = document.createElement('option');
-                option.value = municipios[i].NomeDaColunaMunicipio; // Assumindo que o Power Automate retorna um array de objetos com essa propriedade
-                option.textContent = municipios[i].NomeDaColunaMunicipio;
-                selectsMunicipios[i].appendChild(option);
-                selectsMunicipios[i].disabled = false;
-            }
-
-            for (let i = municipios.length; i < selectsMunicipios.length; i++) {
-                selectsMunicipios[i].disabled = true;
-            }
-        }
-
-        function limparFormulario() {
-            document.getElementById('nome').value = '';
-            document.getElementById('cargo').value = '';
-            desabilitarMunicipios();
-        }
-
-        function desabilitarMunicipios() {
-            const selectsMunicipios = [
-                document.getElementById('municipio1'),
-                document.getElementById('municipio2'),
-                document.getElementById('municipio3'),
-                document.getElementById('municipio4'),
-                document.getElementById('municipio5')
-            ];
-            selectsMunicipios.forEach(select => {
-                select.disabled = true;
-                select.value = '';
-                select.innerHTML = '<option value="">Selecione</option>';
-            });
-        }
-
-        async function salvarDadosPowerAutomate() {
-            const cpfValor = document.getElementById('cpf').value;
-            const nomeValor = document.getElementById('nome').value;
-            const cargoValor = document.getElementById('cargo').value;
-            const municipio1Valor = document.getElementById('municipio1').value;
-            const municipio2Valor = document.getElementById('municipio2').value;
-            const municipio3Valor = document.getElementById('municipio3').value;
-            const municipio4Valor = document.getElementById('municipio4').value;
-            const municipio5Valor = document.getElementById('municipio5').value;
-
-            const dadosParaSalvar = {
-                CPF: cpfValor,
-                Nome: nomeValor,
-                Cargo: cargoValor,
-                Municipio1: municipio1Valor,
-                Municipio2: municipio2Valor,
-                Municipio3: municipio3Valor,
-                Municipio4: municipio4Valor,
-                Municipio5: municipio5Valor
-                // *** Adapte os nomes das propriedades para corresponder ao que o seu fluxo de salvar espera ***
-            };
-
-            try {
-                const response = await fetch(powerAutomateUrlSalvar, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(dadosParaSalvar)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    alert(`Erro ao salvar dados: ${response.status} - ${errorData?.erro || 'Erro desconhecido'}`);
-                    return;
-                }
-
-                alert('Dados salvos com sucesso!');
-                document.getElementById('cpf').value = '';
-                limparFormulario();
-
-            } catch (error) {
-                console.error('Erro ao comunicar com o Power Automate (salvar):', error);
-                alert('Ocorreu um erro ao salvar os dados.');
+                alert('Por favor, digite o CPF.');
             }
         }
     </script>
