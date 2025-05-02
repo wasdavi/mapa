@@ -9,7 +9,7 @@
     <title>Consultar o CPF</title>
 </head>
 <body>
-    <h1>Preencher Dados por CPF e Salvar</h1>
+    <h1>Preencher Dados por CPF</h1>
     <form id="meuFormulario">
         <div>
             <label for="cpf">CPF:</label>
@@ -41,86 +41,48 @@
                 <option value="">Selecione</option>
             </select>
         </div>
-        <button type="button" onclick="salvarDadosSharePoint()">Salvar</button>
+        <button type="button" onclick="salvarDadosPowerAutomate()">Salvar</button>
     </form>
 
     <script>
+        const powerAutomateUrlBuscar = "SUA_URL_DO_GATILHO_HTTP_DO_POWER_AUTOMATE_BUSCAR"; // Substitua pela URL do seu fluxo de busca
+        const powerAutomateUrlSalvar = "SUA_URL_DO_GATILHO_HTTP_DO_POWER_AUTOMATE_SALVAR"; // Substitua pela URL do seu fluxo de salvar
+
         document.getElementById('cpf').addEventListener('blur', function() {
             const cpfDigitado = this.value;
             if (cpfDigitado) {
-                buscarDadosSharePoint(cpfDigitado);
+                buscarDadosPowerAutomate(cpfDigitado);
             } else {
                 limparFormulario();
             }
         });
 
-        async function buscarDadosSharePoint(cpf) {
-            const siteUrl = "SEU_SITE_SHAREPOINT";
-            const listaPessoas = "NOME_DA_SUA_LISTA_PESSOAS";
-            const campoCPF = "NomeDaColunaCPF";
-            const campoNome = "NomeDaColunaNome";
-            const campoCargo = "NomeDaColunaCargo";
-            const endpointPessoas = ${siteUrl}/_api/web/lists/GetByTitle('${listaPessoas}')/items?$filter=${campoCPF} eq '${cpf}'&$select=${campoNome},${campoCargo};
-
+        async function buscarDadosPowerAutomate(cpf) {
             try {
-                const responsePessoas = await fetch(endpointPessoas, {
-                    method: 'GET',
+                const response = await fetch(powerAutomateUrlBuscar, {
+                    method: 'POST',
                     headers: {
-                        'Accept': 'application/json;odata=nometadata',
-                        // * Adicione aqui os cabeçalhos de autenticação necessários *
-                    }
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ cpf: cpf })
                 });
 
-                if (!responsePessoas.ok) {
-                    throw new Error(Erro ao buscar dados da lista de pessoas: ${responsePessoas.status});
-                }
-
-                const dataPessoas = await responsePessoas.json();
-
-                if (dataPessoas.value.length > 0) {
-                    document.getElementById('nome').value = dataPessoas.value[0][campoNome];
-                    const cargoEncontrado = dataPessoas.value[0][campoCargo];
-                    document.getElementById('cargo').value = cargoEncontrado;
-                    buscarMunicipiosPorCargo(cargoEncontrado);
-                } else {
-                    alert('CPF não encontrado na lista de pessoas.');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert(`Erro ao buscar dados: ${response.status} - ${errorData?.erro || 'Erro desconhecido'}`);
                     limparFormulario();
+                    return;
                 }
 
+                const data = await response.json();
+                document.getElementById('nome').value = data.nome;
+                document.getElementById('cargo').value = data.cargo;
+                popularMunicipios(data.municipios);
+
             } catch (error) {
-                console.error('Erro ao buscar dados do SharePoint (lista de pessoas):', error);
-                alert('Ocorreu um erro ao buscar os dados da pessoa.');
+                console.error('Erro ao comunicar com o Power Automate (buscar):', error);
+                alert('Ocorreu um erro ao buscar os dados.');
                 limparFormulario();
-            }
-        }
-
-        async function buscarMunicipiosPorCargo(cargo) {
-            const siteUrlLocal = "URL_DO_SEU_SITE_SHAREPOINT_LOCAL";
-            const listaMunicipiosCargo = "NOME_DA_SUA_LISTA_MUNICIPIOS_CARGO";
-            const campoCargoRelacao = "NomeDaColunaCargo";
-            const campoMunicipio = "NomeDaColunaMunicipio";
-            const endpointMunicipios = ${siteUrlLocal}/_api/web/lists/GetByTitle('${listaMunicipiosCargo}')/items?$filter=${campoCargoRelacao} eq '${cargo}'&$select=${campoMunicipio};
-
-            try {
-                const responseMunicipios = await fetch(endpointMunicipios, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json;odata=nometadata',
-                        // * Adicione aqui os cabeçalhos de autenticação necessários *
-                    }
-                });
-
-                if (!responseMunicipios.ok) {
-                    throw new Error(Erro ao buscar municípios: ${responseMunicipios.status});
-                }
-
-                const dataMunicipios = await responseMunicipios.json();
-                popularMunicipios(dataMunicipios.value);
-
-            } catch (error) {
-                console.error('Erro ao buscar municípios do SharePoint:', error);
-                alert('Ocorreu um erro ao buscar os municípios.');
-                desabilitarMunicipios();
             }
         }
 
@@ -139,8 +101,8 @@
 
             for (let i = 0; i < Math.min(municipios.length, selectsMunicipios.length); i++) {
                 const option = document.createElement('option');
-                option.value = municipios[i][campoMunicipio];
-                option.textContent = municipios[i][campoMunicipio];
+                option.value = municipios[i].NomeDaColunaMunicipio; // Assumindo que o Power Automate retorna um array de objetos com essa propriedade
+                option.textContent = municipios[i].NomeDaColunaMunicipio;
                 selectsMunicipios[i].appendChild(option);
                 selectsMunicipios[i].disabled = false;
             }
@@ -148,6 +110,12 @@
             for (let i = municipios.length; i < selectsMunicipios.length; i++) {
                 selectsMunicipios[i].disabled = true;
             }
+        }
+
+        function limparFormulario() {
+            document.getElementById('nome').value = '';
+            document.getElementById('cargo').value = '';
+            desabilitarMunicipios();
         }
 
         function desabilitarMunicipios() {
@@ -165,15 +133,7 @@
             });
         }
 
-        function limparFormulario() {
-            document.getElementById('nome').value = '';
-            document.getElementById('cargo').value = '';
-            desabilitarMunicipios();
-        }
-
-        async function salvarDadosSharePoint() {
-            const siteUrlResultado = "URL_DO_SEU_SITE_SHAREPOINT_RESULTADO"; // URL da lista "resultado"
-            const listaResultadoNome = "resultado";
+        async function salvarDadosPowerAutomate() {
             const cpfValor = document.getElementById('cpf').value;
             const nomeValor = document.getElementById('nome').value;
             const cargoValor = document.getElementById('cargo').value;
@@ -183,42 +143,39 @@
             const municipio4Valor = document.getElementById('municipio4').value;
             const municipio5Valor = document.getElementById('municipio5').value;
 
-            const item = {
-                'CPF': cpfValor,
-                'Nome': nomeValor,
-                'Cargo': cargoValor,
-                'Municipio1': municipio1Valor,
-                'Municipio2': municipio2Valor,
-                'Municipio3': municipio3Valor,
-                'Municipio4': municipio4Valor,
-                'Municipio5': municipio5Valor
-                // * Adapte os nomes das colunas da sua lista "resultado" aqui *
+            const dadosParaSalvar = {
+                CPF: cpfValor,
+                Nome: nomeValor,
+                Cargo: cargoValor,
+                Municipio1: municipio1Valor,
+                Municipio2: municipio2Valor,
+                Municipio3: municipio3Valor,
+                Municipio4: municipio4Valor,
+                Municipio5: municipio5Valor
+                // *** Adapte os nomes das propriedades para corresponder ao que o seu fluxo de salvar espera ***
             };
 
-            const endpointSalvar = ${siteUrlResultado}/_api/web/lists/GetByTitle('${listaResultadoNome}')/items;
-
             try {
-                const responseSalvar = await fetch(endpointSalvar, {
+                const response = await fetch(powerAutomateUrlSalvar, {
                     method: 'POST',
                     headers: {
-                        'Accept': 'application/json;odata=nometadata',
-                        'Content-Type': 'application/json;odata=nometadata',
-                        // * Adicione aqui os cabeçalhos de autenticação necessários *
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(item)
+                    body: JSON.stringify(dadosParaSalvar)
                 });
 
-                if (!responseSalvar.ok) {
-                    throw new Error(Erro ao salvar dados: ${responseSalvar.status});
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert(`Erro ao salvar dados: ${response.status} - ${errorData?.erro || 'Erro desconhecido'}`);
+                    return;
                 }
 
                 alert('Dados salvos com sucesso!');
-                // Opcional: Limpar o formulário após o sucesso
                 document.getElementById('cpf').value = '';
                 limparFormulario();
 
             } catch (error) {
-                console.error('Erro ao salvar dados no SharePoint:', error);
+                console.error('Erro ao comunicar com o Power Automate (salvar):', error);
                 alert('Ocorreu um erro ao salvar os dados.');
             }
         }
