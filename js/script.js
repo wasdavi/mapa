@@ -168,7 +168,7 @@ async function salvarDadosParaPowerAutomate() {
     const webhookUrl = 'https://prod-01.brazilsouth.logic.azure.com:443/workflows/1fb9782709ea489f8118a7c5e6408497/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9ZFHCbVBb6WufeVspGOCEARPhsRlTz-umpMGruWualw'; // **SUBSTITUA PELA URL DO SEU WEBHOOK**
 
     if (!cpf || !nome || !cargo || !municipio1Valor) {
-        alert('Os campos CPF, Nome e Cargo devem estar preenchicos e, ao menos, a 1ª opção de município deve ser preenchida.');
+        alert('Os campos CPF, Nome e Cargo devem estar preenchidos e, ao menos, a 1ª opção de município deve ser preenchida.');
         return;
     }
 
