@@ -1,71 +1,212 @@
 
-async function consultarDados() {
-    const cpf = document.getElementById('cpf').value;
-    
+
+function consultarSolicitacao() {
+    const cpf = document.getElementById("cpf").value.trim();
+
     if (!cpf) {
-        alert('Por favor, digite um CPF válido.');
+        alert("Por favor, digite o CPF.");
         return;
     }
 
-    try {
-        // Simulação da chamada ao Power Automate
-        // Na implementação real, você usaria o conector do Power Automate
-        const dados = await consultarDadosReal(cpf);
-        
-        if (dados) {
-            document.getElementById('nome').value = dados.nome || '';
-            document.getElementById('cargo').value = dados.cargo || '';
-            
-            // Preencher o combo de localização baseado no cargo
-            if (dados.cargo) {
-                const localizacoes = await simularConsultaLocalizacao(dados.cargo);
-                const select = document.getElementById('localizacao');
-                select.innerHTML = '<option value="">Selecione...</option>';
-                
-                localizacoes.forEach(local => {
-                    const option = document.createElement('option');
-                    option.value = local;
-                    option.textContent = local;
-                    select.appendChild(option);
-                });
-                
-                select.disabled = false;
+    const fluxoURL = 'https://prod-28.brazilsouth.logic.azure.com:443/workflows/ae14ab79dc264f8c9afb314f85b65660/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=2xiyOniaPqJwgoVg9O545JnDV99OjKtNgbBzTu8keEM'; // Substitua pelo URL do seu fluxo
+    const dados = { cpf: cpf };
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', fluxoURL, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            try {
+                const respostaTexto = xhr.responseText;
+                console.log("Resposta bruta:", respostaTexto);
+                const resposta = JSON.parse(respostaTexto);
+
+                const campoNome = document.getElementById('nome');
+                const campoCargo = document.getElementById('cargo');
+
+                if (Array.isArray(resposta) && resposta.length > 0 && resposta[0].nome && resposta[0].cargo) {
+                    const nome = resposta[0].nome;
+                    campoNome.value = nome;
+                    const cargo = resposta[0].cargo;
+                    campoCargo.value = cargo;
+
+                    buscarMunicipiosPorCargo(cargo);
+
+                } else {
+                    // campoNome.value = "Nome não encontrado";
+                    // campoCargo.value = "Cargo não encontrado";
+                    alert("CPF incorreto ou não se encotra na relação, favor procurar o RH.");
+                }
+
+
+            } catch (erro) {
+                alert('Erro ao interpretar a resposta.');
+                console.error("Erro no JSON.parse:", erro);
             }
         } else {
-            alert('Nenhum dado encontrado para o CPF informado.');
+            alert('Erro na requisição: ' + xhr.status);
+        }
+    };
+    xhr.send(JSON.stringify(dados));
+}
+
+
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+function buscarMunicipiosPorCargo(cargo) {
+    const fluxoMunicipiosURL = 'https://prod-03.brazilsouth.logic.azure.com:443/workflows/1ed2c86b44394605bac7367483290604/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nE-C2B4C5_xK3RnSsqzFC0OveevSHM--oSoe6k9JAx4'; // Substitua pelo URL real do segundo fluxo
+
+    const dados = { cargo: cargo };
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', fluxoMunicipiosURL, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            try {
+                const respostaTexto = xhr.responseText;
+                console.log("Resposta de municípios:", respostaTexto);
+
+                const resposta = JSON.parse(respostaTexto);
+
+                // Extrair a lista a partir de array de objetos
+                if (Array.isArray(resposta)) {
+                    // Mapear os valores da chave "municipios"
+                    const lista = resposta.map(item => item.municipios).filter(Boolean);
+                    popularMunicipios(lista);
+                } else {
+                    alert("Ocorreu um erro na tabela de cargos e municípios.");
+                }
+
+            } catch (erro) {
+                alert('Erro ao interpretar a resposta dos municípios.');
+                console.error("Erro no JSON.parse (municípios):", erro);
+            }
+        } else {
+            alert('Erro ao consultar municípios: ' + xhr.status);
+        }
+    };
+    xhr.send(JSON.stringify(dados));
+}
+
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+function popularMunicipios(listaMunicipios) {
+    const selects = [
+        document.getElementById('municipio1'),
+        document.getElementById('municipio2'),
+        document.getElementById('municipio3'),
+        document.getElementById('municipio4'),
+        document.getElementById('municipio5')
+    ];
+
+    selects.forEach((select, index) => {
+        // Habilita o select (caso estivesse desativado)
+        select.disabled = false;
+
+        // Limpa opções anteriores
+        select.innerHTML = '';
+
+        // Adiciona a opção inicial
+        const opcaoPadrao = document.createElement('option');
+        opcaoPadrao.value = '';
+        opcaoPadrao.textContent = 'Selecione um município';
+        select.appendChild(opcaoPadrao);
+
+        // Adiciona os municípios na lista
+        listaMunicipios.forEach(municipio => {
+            const option = document.createElement('option');
+            option.value = municipio;
+            option.textContent = municipio;
+            select.appendChild(option);
+        });
+    });
+}
+
+
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+function limparFormulario() {
+    document.getElementById('cpf').value = '';
+    document.getElementById('nome').value = '';
+    document.getElementById('cargo').value = '';
+    desabilitarMunicipios();
+}
+
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+function desabilitarMunicipios() {
+    const selectsMunicipios = [
+        document.getElementById('municipio1'),
+        document.getElementById('municipio2'),
+        document.getElementById('municipio3'),
+        document.getElementById('municipio4'),
+        document.getElementById('municipio5')
+    ];
+    selectsMunicipios.forEach(select => {
+        select.disabled = true;
+        select.value = '';
+        select.innerHTML = '<option value="">Selecione um município</option>';
+    });
+}
+
+
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+async function salvarDadosParaPowerAutomate() {
+    const cpf = document.getElementById('cpf').value;
+    const nome = document.getElementById('nome').value;
+    const cargo = document.getElementById('cargo').value;
+    const municipio1Valor = document.getElementById('municipio1').value;
+    const municipio2Valor = document.getElementById('municipio2').value;
+    const municipio3Valor = document.getElementById('municipio3').value;
+    const municipio4Valor = document.getElementById('municipio4').value;
+    const municipio5Valor = document.getElementById('municipio5').value;
+    const webhookUrl = 'https://prod-01.brazilsouth.logic.azure.com:443/workflows/1fb9782709ea489f8118a7c5e6408497/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9ZFHCbVBb6WufeVspGOCEARPhsRlTz-umpMGruWualw'; // **SUBSTITUA PELA URL DO SEU WEBHOOK**
+
+    if (!cpf || !nome || !cargo || !municipio1Valor) {
+        alert('Os campos CPF, Nome e Cargo devem estar preenchicos e, ao menos, a 1ª opção de município deve ser preenchida.');
+        return;
+    }
+
+    const data = {
+        cpf: cpf,
+        nome: nome,
+        cargo: cargo,
+        Municipio1: municipio1Valor,
+        Municipio2: municipio2Valor,
+        Municipio3: municipio3Valor,
+        Municipio4: municipio4Valor,
+        Municipio5: municipio5Valor
+    };
+
+    try {
+        const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok || response.status === 0) {
+            alert('Dados cadastrados com sucesso!');
+            limparFormulario();
+        } else {
+            const responseData = await response.json(); // Tenta obter detalhes do erro, se disponíveis
+            console.error('Erro ao enviar dados:', response.status, responseData);
+            //alert(`Erro ao enviar dados: Status ${response.status}`);
+            alert('CPF já cadastrado.');
+            limparFormulario();
         }
     } catch (error) {
-        console.error('Erro ao consultar dados:', error);
-        alert('Ocorreu um erro ao consultar os dados.');
+        console.error('Erro inesperado ao enviar:', error);
+        alert('Ocorreu um erro inesperado ao enviar os dados.');
+        limparFormulario();
     }
 }
-
-
-async function consultarDadosReal(cpf) {
-    const response = await fetch("https://prod-14.brazilsouth.logic.azure.com:443/workflows/e03b2a2f15b149e483bf7910c1b05b32/triggers/manual/paths/invoke?api-version=2016-06-01", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ cpf: cpf })
-    });
-    
-    if (!response.ok) {
-        throw new Error('Erro na consulta');
-    }
-    
-    return await response.json();
-}
-
-
-async function simularConsultaLocalizacao(cargo) {
-    // Simulação - na prática, você faria outra chamada ao Power Automate
-    // para consultar a planilha LOCAL
-    console.log(`Simulando consulta de localização para cargo: ${cargo}`);
-    
-    // Retorno simulado
-    return ["Brasília/DF", "São Paulo/SP", "Rio de Janeiro/RJ"];
-}
-
 
 

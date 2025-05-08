@@ -1,52 +1,80 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/estilos.css">
-    <!-- link das fontes do google fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&family=Press+Start+2P&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/script.js" type="text/javascript"></script>
     <title>Consultar o CPF</title>
+
 </head>
+
 <body>
-    <h1>Consulta de CPF</h1>
-    <form id="cpfForm">
+
+
+    <form id="meuFormulario">
+        <h1>Cadastro de Localização dos Concursados Nomeados em 2025</h1>
         <div>
             <label for="cpf">Digite o CPF:</label>
-            <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" required>
+            <input type="text" id="cpf" name="cpf" placeholder="Somente números, não incluir 0 (zeros) à esquerda."
+                required> <br><br>
+            <button type="button" onclick="consultarSolicitacao()">Consultar</button>
         </div>
-        <button type="button" onclick="enviarCPF()">Consultar CPF</button>
+        <br>
+        <h2>Dados Encontrados:</h2>
+        <div>
+            <label for="nome">Nome:</label>
+            <input type="text" id="nome" name="nome" readonly>
+        </div>
+        <br>
+        <div>
+            <label for="cargo">Cargo:</label>
+            <input type="text" id="cargo" name="cargo" readonly>
+        </div>
+        <br>
+        <br>
+        <div>
+            <h3>Municípios de Localização:</h3>
+            <label>1ª Opção:</label>
+            <select id="municipio1" name="municipio1" placeholder="Selecione o município" disabled>
+                <option value="">Selecione um município.</option>
+            </select>
+            <br>
+            <br>
+            <label>2ª Opção:</label>
+            <select id="municipio2" name="municipio2" disabled>
+                <option value="">Selecione um município.</option>
+            </select>
+            <br>
+            <br>
+            <label>3ª Opção:</label>
+            <select id="municipio3" name="municipio3" disabled>
+                <option value="">Selecione um município.</option>
+            </select>
+            <br>
+            <br>
+            <label>4ª Opção:</label>
+            <select id="municipio4" name="municipio4" disabled>
+                <option value="">Selecione um município.</option>
+            </select>
+            <br>
+            <br>
+            <label>5ª Opção:</label>
+            <select id="municipio5" name="municipio5" disabled>
+                <option value="">Selecione um município.</option>
+            </select>
+        </div>
+        <br>
+        <label>OBS.: Uma vez realizado o cadastro, não será permitida qualquer alteração. Dessa forma, sugerimos que
+            confira todos os dados antes de salvá-los.</label>
+        <br>
+        <button type="button" onclick="salvarDadosParaPowerAutomate()">Salvar</button>
     </form>
-
-    <script>
-        async function enviarCPF() {
-            const cpf = document.getElementById('cpf').value;
-            const webhookUrl = 'https://prod-12.brazilsouth.logic.azure.com:443/workflows/94de13c8e0ab4a6a90374b13e97c549e/triggers/manual/paths/invoke?api-version=2016-06-01'; // Substitua pela URL do seu webhook
-
-            if (cpf) {
-                try {
-                    const response = await fetch(webhookUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ cpf: cpf })
-                    });
-
-                    if (response.ok) {
-                        alert('Solicitação enviada com sucesso!');
-                        document.getElementById('cpfForm').reset();
-                    } else {
-                        alert('Ocorreu um erro ao enviar a solicitação.');
-                    }
-                } catch (error) {
-                    console.error('Erro ao enviar para o Power Automate:', error);
-                    alert('Ocorreu um erro inesperado.');
-                }
-            } else {
-                alert('Por favor, digite o CPF.');
-            }
-        }
-    </script>
 </body>
+
+</html>
+
+</body>
+
 </html>
