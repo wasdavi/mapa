@@ -45,6 +45,15 @@ select {
     box-sizing: border-box;
 }
 
+input[type="email"],
+select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
 button {
     display: block;
     width: 100%;

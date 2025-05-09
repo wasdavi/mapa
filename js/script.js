@@ -1,7 +1,7 @@
 
 
 function consultarSolicitacao() {
-    const cpf = document.getElementById("cpf").value.trim();
+    const cpf = document.getElementById("cpf").value;
 
     if (!cpf) {
         alert("Por favor, digite o CPF.");
@@ -131,6 +131,7 @@ function limparFormulario() {
     document.getElementById('cpf').value = '';
     document.getElementById('nome').value = '';
     document.getElementById('cargo').value = '';
+    document.getElementById('email').value = '';
     desabilitarMunicipios();
 }
 
@@ -160,6 +161,7 @@ async function salvarDadosParaPowerAutomate() {
     const cpf = document.getElementById('cpf').value;
     const nome = document.getElementById('nome').value;
     const cargo = document.getElementById('cargo').value;
+    const email = document.getElementById('email').value.trim();
     const municipio1Valor = document.getElementById('municipio1').value;
     const municipio2Valor = document.getElementById('municipio2').value;
     const municipio3Valor = document.getElementById('municipio3').value;
@@ -167,8 +169,16 @@ async function salvarDadosParaPowerAutomate() {
     const municipio5Valor = document.getElementById('municipio5').value;
     const webhookUrl = 'https://prod-01.brazilsouth.logic.azure.com:443/workflows/1fb9782709ea489f8118a7c5e6408497/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9ZFHCbVBb6WufeVspGOCEARPhsRlTz-umpMGruWualw'; // **SUBSTITUA PELA URL DO SEU WEBHOOK**
 
-    if (!cpf || !nome || !cargo || !municipio1Valor) {
-        alert('Os campos CPF, Nome e Cargo devem estar preenchidos e, ao menos, a 1ª opção de município deve ser preenchida.');
+
+    const verificaEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!verificaEmail.test(email)) {
+        alert("Por favor, digite um e-mail válido.");
+        return;
+    }
+    
+    if (!cpf || !nome || !cargo || !email || !municipio1Valor) {
+        alert('Os campos CPF, Nome, Cargo e E-mail devem estar preenchidos e, ao menos, a 1ª opção de município deve ser preenchida.');
         return;
     }
 
@@ -176,6 +186,7 @@ async function salvarDadosParaPowerAutomate() {
         cpf: cpf,
         nome: nome,
         cargo: cargo,
+        email: email,
         Municipio1: municipio1Valor,
         Municipio2: municipio2Valor,
         Municipio3: municipio3Valor,
