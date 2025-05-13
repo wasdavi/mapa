@@ -34,6 +34,7 @@ label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
+    text-align: justify;
 }
 
 input[type="text"],
