@@ -1,13 +1,36 @@
+// Máscara de CPF automática
+const cpfInput = document.getElementById('cpf');
+cpfInput.addEventListener('input', function () {
+    let valor = cpfInput.value.replace(/\D/g, '');
+    valor = valor.slice(0, 11);
+
+    if (valor.length > 9) {
+        valor = valor.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    } else if (valor.length > 6) {
+        valor = valor.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+    } else if (valor.length > 3) {
+        valor = valor.replace(/(\d{3})(\d+)/, '$1.$2');
+    }
+
+    cpfInput.value = valor;
+});
+
+
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
 function consultarSolicitacao() {
-    const cpf = document.getElementById("cpf").value;
+    let cpf = document.getElementById("cpf").value.trim();
+
+    // Remove pontuação e zeros à esquerda
+    cpf = cpf.replace(/\D/g, '').replace(/^0+/, '');
+
 
     if (!cpf) {
         alert("Por favor, digite o CPF.");
         return;
     }
-
+    
     const fluxoURL = 'https://prod-28.brazilsouth.logic.azure.com:443/workflows/ae14ab79dc264f8c9afb314f85b65660/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=2xiyOniaPqJwgoVg9O545JnDV99OjKtNgbBzTu8keEM'; // Substitua pelo URL do seu fluxo
     const dados = { cpf: cpf };
     const xhr = new XMLHttpRequest();
@@ -32,8 +55,6 @@ function consultarSolicitacao() {
                     buscarMunicipiosPorCargo(cargo);
 
                 } else {
-                    // campoNome.value = "Nome não encontrado";
-                    // campoCargo.value = "Cargo não encontrado";
                     alert("CPF incorreto ou não se encotra na relação, favor procurar o RH.");
                 }
 
@@ -156,8 +177,33 @@ function desabilitarMunicipios() {
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+function verificarMunicipiosDuplicados() {
+    const municipios = [
+        document.getElementById('municipio1').value,
+        document.getElementById('municipio2').value,
+        document.getElementById('municipio3').value,
+        document.getElementById('municipio4').value,
+        document.getElementById('municipio5').value
+    ].filter(v => v !== '');
+
+    const duplicados = new Set(municipios).size !== municipios.length;
+
+    if (duplicados) {
+        alert('Existem municípios duplicados. Por favor, altere ou deixe como "Selecione um município".');
+        return false;
+    }
+
+    return true;
+}
+
+let dadosParaSalvar = null;
+
+
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
 
 async function salvarDadosParaPowerAutomate() {
+    /*
     const cpf = document.getElementById('cpf').value;
     const nome = document.getElementById('nome').value;
     const cargo = document.getElementById('cargo').value;
@@ -176,7 +222,7 @@ async function salvarDadosParaPowerAutomate() {
         alert("Por favor, digite um e-mail válido.");
         return;
     }
-    
+
     if (!cpf || !nome || !cargo || !email || !municipio1Valor) {
         alert('Os campos CPF, Nome, Cargo e E-mail devem estar preenchidos e, ao menos, a 1ª opção de município deve ser preenchida.');
         return;
@@ -218,6 +264,77 @@ async function salvarDadosParaPowerAutomate() {
         alert('Ocorreu um erro inesperado ao enviar os dados.');
         limparFormulario();
     }
+        */
+
+    if (!verificarMunicipiosDuplicados()) return;
+
+    // Armazenar dados antes da confirmação
+    const cpf = document.getElementById('cpf').value;
+    const nome = document.getElementById('nome').value;
+    const cargo = document.getElementById('cargo').value;
+    const email = document.getElementById('email').value.trim();
+    const municipio1 = document.getElementById('municipio1').value;
+    const municipio2 = document.getElementById('municipio2').value;
+    const municipio3 = document.getElementById('municipio3').value;
+    const municipio4 = document.getElementById('municipio4').value;
+    const municipio5 = document.getElementById('municipio5').value;
+
+    const cpfLimpo = cpf.replace(/\D/g, '').replace(/^0+/, '');
+
+    const verificaEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!verificaEmail.test(email)) {
+        alert("Por favor, digite um e-mail válido.");
+        return;
+    }
+
+    if (!cpfLimpo || !nome || !cargo || !email || !municipio1) {
+        alert('Os campos CPF, Nome e Cargo devem estar preenchidos e, ao menos, a 1ª opção de município.');
+        return;
+    }
+
+    dadosParaSalvar = {
+        cpf: cpfLimpo,
+        nome: nome,
+        cargo: cargo,
+        email: email,
+        Municipio1: municipio1,
+        Municipio2: municipio2,
+        Municipio3: municipio3,
+        Municipio4: municipio4,
+        Municipio5: municipio5
+    };
+
+    // Mostrar modal
+    document.getElementById('confirmModal').style.display = 'flex';
 }
 
+document.getElementById('btnSim').addEventListener('click', async function () {
+    const webhookUrl = 'https://prod-01.brazilsouth.logic.azure.com:443/workflows/1fb9782709ea489f8118a7c5e6408497/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9ZFHCbVBb6WufeVspGOCEARPhsRlTz-umpMGruWualw'; // Substitua pela sua URL real
+    document.getElementById('confirmModal').style.display = 'none';
+
+    try {
+        const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosParaSalvar)
+        });
+
+        if (response.ok || response.status === 0) {
+            alert('Dados cadastrados com sucesso!');
+            limparFormulario();
+        } else {
+            alert('CPF já cadastrado.');
+            limparFormulario();
+        }
+    } catch (error) {
+        alert('Erro inesperado ao enviar os dados.');
+        limparFormulario();
+    }
+});
+
+document.getElementById('btnNao').addEventListener('click', function () {
+    document.getElementById('confirmModal').style.display = 'none';
+    dadosParaSalvar = null;
+});
 
