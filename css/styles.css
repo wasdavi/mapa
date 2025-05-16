@@ -125,12 +125,12 @@ button:hover {
 }
 
 #btnNao {
-    background-color: #216b3a;
+    background-color: #216b2a;
     color: white;
 }
 
 #btnNao:hover {
-    background-color: #0056b3;
+    background-color: #0056b2;
 }
 
 .logo-container {

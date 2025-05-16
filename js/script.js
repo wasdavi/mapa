@@ -1,24 +1,74 @@
 
-function mascaraCPF(){
-// Máscara de CPF automática
-const cpfInput = document.getElementById('cpf');
-cpfInput.addEventListener('input', function () {
-    let valor = cpfInput.value.replace(/\D/g, '');
-    valor = valor.slice(0, 11);
+function mascaraCPF() {
+    // Máscara de CPF automática
+    const cpfInput = document.getElementById('cpf');
+    cpfInput.addEventListener('input', function () {
+        let valor = cpfInput.value.replace(/\D/g, '');
+        valor = valor.slice(0, 11);
 
-    if (valor.length > 9) {
-        valor = valor.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    } else if (valor.length > 6) {
-        valor = valor.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
-    } else if (valor.length > 3) {
-        valor = valor.replace(/(\d{3})(\d+)/, '$1.$2');
-    }
+        if (valor.length > 9) {
+            valor = valor.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        } else if (valor.length > 6) {
+            valor = valor.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+        } else if (valor.length > 3) {
+            valor = valor.replace(/(\d{3})(\d+)/, '$1.$2');
+        }
 
-    cpfInput.value = valor;
-});
+        cpfInput.value = valor;
+    });
 }
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+function consultarListaResultado() {
+    let cpf = document.getElementById("cpf").value.trim();
+
+    // Remove pontuação e zeros à esquerda
+    cpf = cpf.replace(/\D/g, '').replace(/^0+/, '');
+
+
+    if (!cpf) {
+        alert("Por favor, digite o CPF.");
+        return;
+    }
+
+    const fluxoURL = 'https://prod-10.brazilsouth.logic.azure.com:443/workflows/ecbc7e73f207409597c6982ff99ece05/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=t6LHITg9L4-fSRnUgc6_0OtTk1nwdMAyTGwOqxJo10A'; // Substitua pelo URL do seu fluxo
+    const dados = { cpf: cpf };
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', fluxoURL, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            try {
+                const respostaTexto = xhr.responseText;
+                console.log("Resposta bruta:", respostaTexto);
+                const resposta = JSON.parse(respostaTexto);
+
+                //const campoNome = document.getElementById('nome');
+                //const campoCargo = document.getElementById('cargo');
+
+                if (Array.isArray(resposta) && resposta.length > 0 && resposta[0].nome && resposta[0].cargo) {
+                    alert("CPF já cadastrado.");
+                    limparFormulario();
+                } else {
+                    consultarSolicitacao();
+                }
+
+
+            } catch (erro) {
+                alert('Lista Resultado: Erro ao interpretar a resposta.');
+                console.error("Erro no JSON.parse:", erro);
+            }
+        } else {
+            alert('Lista Resultado: Erro na requisição ' + xhr.status);
+        }
+    };
+    xhr.send(JSON.stringify(dados));
+}
+
+
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
 
 
 function consultarSolicitacao() {
@@ -62,11 +112,11 @@ function consultarSolicitacao() {
 
 
             } catch (erro) {
-                alert('Erro ao interpretar a resposta.');
+                alert('Lista Dados: Erro ao interpretar a resposta.');
                 console.error("Erro no JSON.parse:", erro);
             }
         } else {
-            alert('Erro na requisição: ' + xhr.status);
+            alert('Lista Dados: Erro na requisição ' + xhr.status);
         }
     };
     xhr.send(JSON.stringify(dados));
@@ -77,7 +127,7 @@ function consultarSolicitacao() {
 
 
 function buscarMunicipiosPorCargo(cargo) {
-    const fluxoMunicipiosURL = 'https://prod-03.brazilsouth.logic.azure.com:443/workflows/1ed2c86b44394605bac7367483290604/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nE-C2B4C5_xK3RnSsqzFC0OveevSHM--oSoe6k9JAx4'; // Substitua pelo URL real do segundo fluxo
+    const fluxoMunicipiosURL = 'https://prod-03.brazilsouth.logic.azure.com:443/workflows/1ed2c86b44394605bac7367483290604/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nE-C2B4C5_xK3RnSsqzFC0OveevSHM--oSoe6k9JAx4'; 
 
     const dados = { cargo: cargo };
     const xhr = new XMLHttpRequest();
@@ -191,7 +241,7 @@ function verificarMunicipiosDuplicados() {
     const duplicados = new Set(municipios).size !== municipios.length;
 
     if (duplicados) {
-        alert('Existem municípios duplicados. Por favor, altere ou deixe como "Selecione um município".');
+        alert('Existem municípios duplicados. Por favor, altere ou não selecione".');
         return false;
     }
 
@@ -201,8 +251,8 @@ function verificarMunicipiosDuplicados() {
 
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-/*let dadosParaSalvar = null;
+/*
+let dadosParaSalvar = null;
 
 
 async function salvarDadosParaPowerAutomate() {
@@ -218,7 +268,7 @@ async function salvarDadosParaPowerAutomate() {
     const municipio3Valor = document.getElementById('municipio3').value;
     const municipio4Valor = document.getElementById('municipio4').value;
     const municipio5Valor = document.getElementById('municipio5').value;
-    const webhookUrl = 'https://prod-01.brazilsouth.logic.azure.com:443/workflows/1fb9782709ea489f8118a7c5e6408497/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9ZFHCbVBb6WufeVspGOCEARPhsRlTz-umpMGruWualw'; // **SUBSTITUA PELA URL DO SEU WEBHOOK**
+    const webhookUrl = 'https://prod-01.brazilsouth.logic.azure.com:443/workflows/1fb9782709ea489f8118a7c5e6408497/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9ZFHCbVBb6WufeVspGOCEARPhsRlTz-umpMGruWualw'; 
     
     
     const verificaEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -269,7 +319,7 @@ async function salvarDadosParaPowerAutomate() {
         alert('Ocorreu um erro inesperado ao enviar os dados.');
         limparFormulario();
     }
-        
+       
 
     if (!verificarMunicipiosDuplicados()) return;
 
@@ -307,7 +357,7 @@ async function salvarDadosParaPowerAutomate() {
 }
 
 document.getElementById('btnSim').addEventListener('click', async function () {
-    const webhookUrl = 'https://prod-01.brazilsouth.logic.azure.com:443/workflows/1fb9782709ea489f8118a7c5e6408497/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9ZFHCbVBb6WufeVspGOCEARPhsRlTz-umpMGruWualw'; // Substitua pela sua URL real
+    const webhookUrl = 'https://prod-01.brazilsouth.logic.azure.com:443/workflows/1fb9782709ea489f8118a7c5e6408497/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9ZFHCbVBb6WufeVspGOCEARPhsRlTz-umpMGruWualw'; 
     document.getElementById('confirmModal').style.display = 'none';
 
     try {
