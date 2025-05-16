@@ -1,3 +1,5 @@
+
+function mascaraCPF(){
 // Máscara de CPF automática
 const cpfInput = document.getElementById('cpf');
 cpfInput.addEventListener('input', function () {
@@ -14,7 +16,7 @@ cpfInput.addEventListener('input', function () {
 
     cpfInput.value = valor;
 });
-
+}
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
@@ -30,7 +32,7 @@ function consultarSolicitacao() {
         alert("Por favor, digite o CPF.");
         return;
     }
-    
+
     const fluxoURL = 'https://prod-28.brazilsouth.logic.azure.com:443/workflows/ae14ab79dc264f8c9afb314f85b65660/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=2xiyOniaPqJwgoVg9O545JnDV99OjKtNgbBzTu8keEM'; // Substitua pelo URL do seu fluxo
     const dados = { cpf: cpf };
     const xhr = new XMLHttpRequest();
@@ -196,14 +198,17 @@ function verificarMunicipiosDuplicados() {
     return true;
 }
 
-let dadosParaSalvar = null;
 
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+/*let dadosParaSalvar = null;
+
 
 async function salvarDadosParaPowerAutomate() {
-    /*
+
+
+    
     const cpf = document.getElementById('cpf').value;
     const nome = document.getElementById('nome').value;
     const cargo = document.getElementById('cargo').value;
@@ -214,20 +219,20 @@ async function salvarDadosParaPowerAutomate() {
     const municipio4Valor = document.getElementById('municipio4').value;
     const municipio5Valor = document.getElementById('municipio5').value;
     const webhookUrl = 'https://prod-01.brazilsouth.logic.azure.com:443/workflows/1fb9782709ea489f8118a7c5e6408497/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9ZFHCbVBb6WufeVspGOCEARPhsRlTz-umpMGruWualw'; // **SUBSTITUA PELA URL DO SEU WEBHOOK**
-
-
+    
+    
     const verificaEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+    
     if (!verificaEmail.test(email)) {
         alert("Por favor, digite um e-mail válido.");
         return;
     }
-
+    
     if (!cpf || !nome || !cargo || !email || !municipio1Valor) {
         alert('Os campos CPF, Nome, Cargo e E-mail devem estar preenchidos e, ao menos, a 1ª opção de município deve ser preenchida.');
         return;
     }
-
+    
     const data = {
         cpf: cpf,
         nome: nome,
@@ -239,7 +244,7 @@ async function salvarDadosParaPowerAutomate() {
         Municipio4: municipio4Valor,
         Municipio5: municipio5Valor
     };
-
+    
     try {
         const response = await fetch(webhookUrl, {
             method: 'POST',
@@ -248,7 +253,7 @@ async function salvarDadosParaPowerAutomate() {
             },
             body: JSON.stringify(data)
         });
-
+    
         if (response.ok || response.status === 0) {
             alert('Dados cadastrados com sucesso!');
             limparFormulario();
@@ -264,7 +269,7 @@ async function salvarDadosParaPowerAutomate() {
         alert('Ocorreu um erro inesperado ao enviar os dados.');
         limparFormulario();
     }
-        */
+        
 
     if (!verificarMunicipiosDuplicados()) return;
 
@@ -272,7 +277,6 @@ async function salvarDadosParaPowerAutomate() {
     const cpf = document.getElementById('cpf').value;
     const nome = document.getElementById('nome').value;
     const cargo = document.getElementById('cargo').value;
-    const email = document.getElementById('email').value.trim();
     const municipio1 = document.getElementById('municipio1').value;
     const municipio2 = document.getElementById('municipio2').value;
     const municipio3 = document.getElementById('municipio3').value;
@@ -281,14 +285,7 @@ async function salvarDadosParaPowerAutomate() {
 
     const cpfLimpo = cpf.replace(/\D/g, '').replace(/^0+/, '');
 
-    const verificaEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!verificaEmail.test(email)) {
-        alert("Por favor, digite um e-mail válido.");
-        return;
-    }
-
-    if (!cpfLimpo || !nome || !cargo || !email || !municipio1) {
+    if (!cpfLimpo || !nome || !cargo || !municipio1) {
         alert('Os campos CPF, Nome e Cargo devem estar preenchidos e, ao menos, a 1ª opção de município.');
         return;
     }
@@ -297,7 +294,6 @@ async function salvarDadosParaPowerAutomate() {
         cpf: cpfLimpo,
         nome: nome,
         cargo: cargo,
-        email: email,
         Municipio1: municipio1,
         Municipio2: municipio2,
         Municipio3: municipio3,
@@ -307,6 +303,7 @@ async function salvarDadosParaPowerAutomate() {
 
     // Mostrar modal
     document.getElementById('confirmModal').style.display = 'flex';
+
 }
 
 document.getElementById('btnSim').addEventListener('click', async function () {
@@ -337,4 +334,4 @@ document.getElementById('btnNao').addEventListener('click', function () {
     document.getElementById('confirmModal').style.display = 'none';
     dadosParaSalvar = null;
 });
-
+*/
