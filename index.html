@@ -27,6 +27,7 @@
             <label for="cpf">Digite o CPF:</label>
             <input type="text" id="cpf" name="cpf" required> <br><br>
             <button type="button" onclick="consultarListaResultado()">Consultar</button>
+            <label for="obs">Obs.: Ao clicar em "Consultar", aguarde alguns segundos até que seus dados apareçam.</label>
         </div>
         <br>
         <h2>Dados Encontrados:</h2>
@@ -101,6 +102,7 @@
 
 <script>
 
+
     mascaraCPF();
 
     let dadosParaSalvar = null;
@@ -155,7 +157,7 @@
     }
 
     document.getElementById('btnSim').addEventListener('click', async function () {
-        const webhookUrl = 'https://prod-01.brazilsouth.logic.azure.com:443/workflows/1fb9782709ea489f8118a7c5e6408497/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9ZFHCbVBb6WufeVspGOCEARPhsRlTz-umpMGruWualw'; 
+        const webhookUrl = 'https://prod-01.brazilsouth.logic.azure.com:443/workflows/1fb9782709ea489f8118a7c5e6408497/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9ZFHCbVBb6WufeVspGOCEARPhsRlTz-umpMGruWualw';
         document.getElementById('confirmModal').style.display = 'none';
 
         try {
